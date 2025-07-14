@@ -2,10 +2,8 @@ name: Run eo-ip every 5 minutes
 
 on:
   schedule:
-    # 每5分钟运行一次 (UTC时间)
     - cron: '*/1 * * * *'
-  # 允许手动触发
-  workflow_dispatch:
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
   run-script:
