@@ -1,4 +1,4 @@
-name: Run eo-ip every 5 minutes
+name: Run eo-ip every 10 minutes
 on:
   schedule:
     - cron: '*/10 * * * *'
