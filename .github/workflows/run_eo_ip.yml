@@ -1,5 +1,4 @@
 name: Run eo-ip every 5 minutes
-
 on:
   schedule:
     - cron: '*/1 * * * *'
@@ -39,7 +38,7 @@ jobs:
   keepalive-workflow:
     name: Keepalive Workflow
     if: ${{ always() }}
-    needs: get_bing_image
+    needs: run_eo_ip
     runs-on: ubuntu-latest
     permissions:
       actions: write
