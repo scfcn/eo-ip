@@ -1,0 +1,27 @@
+name: Run eo-ip every 5 minutes
+
+on:
+  schedule:
+    # 每5分钟运行一次 (UTC时间)
+    - cron: '*/5 * * * *'
+  # 允许手动触发
+  workflow_dispatch:
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run eo-ip.py
+        run: |
+          # 安装依赖（如果需要）
+          pip install ipaddress
+          # 运行脚本
+          python eo-ip.py
