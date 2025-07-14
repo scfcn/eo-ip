@@ -35,3 +35,12 @@ jobs:
             git commit -m "Update IP lists"
             git push
           fi
+keepalive-workflow:
+  name: Keepalive Workflow
+  if: ${{ always() }}
+  needs: get_bing_image
+  runs-on: ubuntu-latest
+  permissions:
+    actions: write
+  steps:
+    - uses: liskin/gh-workflow-keepalive@v1
