@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <link rel="shortcut icon" href="./favicon.ico" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雾都云EdgeOne优选节点</title>
+    <link rel="stylesheet" href="https://cdnjs.qxzhan.cn/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://jsd.qxzhan.cn/npm/chart.js"></script>
+    <style>
+        :root {
+            --space-dark: #0a0e17;
+            --space-darker: #070a12;
+            --neon-blue: #00e0ff;
+            --neon-purple: #b967ff;
+            --electric-blue: #4e6fff;
+            --plasma-pink: #ff2d75;
+            --matrix-green: #00ff9d;
+            --star-white: #e0f7ff;
+            --card-bg: rgba(16, 22, 39, 0.7);
+            --card-border: rgba(108, 92, 231, 0.3);
+            --card-hover: rgba(108, 92, 231, 0.15);
+            --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background: var(--space-dark);
+            color: var(--star-white);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .grid-lines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(78, 111, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(78, 111, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        header {
+            padding: 50px 0 30px;
+            text-align: center;
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .logo-icon {
+            font-size: 3.5rem;
+            color: var(--neon-blue);
+            text-shadow: 0 0 25px rgba(0, 224, 255, 0.7);
+            margin-bottom: 10px;
+            animation: pulse 3s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); text-shadow: 0 0 25px rgba(0, 224, 255, 0.7); }
+            100% { transform: scale(1.1); text-shadow: 0 0 40px rgba(0, 224, 255, 0.9), 0 0 60px rgba(108, 92, 231, 0.5); }
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            font-size: 1.4rem;
+            color: rgba(224, 247, 255, 0.8);
+            max-width: 700px;
+            margin: 0 auto 30px;
+            line-height: 1.7;
+        }
+
+        .domain-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 30px 40px;
+            max-width: 700px;
+            margin: 0 auto;
+            text-align: center;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+            z-index: 2;
+        }
+
+        .domain-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--electric-blue), var(--neon-purple), var(--plasma-pink));
+            z-index: -1;
+            border-radius: 22px;
+        }
+
+        .domain-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, rgba(108, 92, 231, 0.1), transparent);
+            z-index: -1;
+        }
+
+        .domain {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--star-white);
+            margin: 15px 0;
+            letter-spacing: 1px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 15px rgba(0, 224, 255, 0.5);
+        }
+
+        .domain-info {
+            font-size: 1.2rem;
+            color: var(--neon-blue);
+            margin-top: 20px;
+            font-weight: 500;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 60px 0;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 35px 30px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 20px 40px rgba(108, 92, 231, 0.4);
+            border-color: var(--neon-purple);
+            background: var(--card-hover);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+        }
+
+        .stat-icon {
+            font-size: 3.5rem;
+            color: var(--neon-blue);
+            margin-bottom: 25px;
+            text-shadow: 0 0 20px rgba(0, 224, 255, 0.5);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover .stat-icon {
+            transform: scale(1.1);
+            color: var(--neon-purple);
+        }
+
+        .stat-value {
+            font-size: 3.2rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 15px 0;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover .stat-value {
+            background: linear-gradient(90deg, var(--matrix-green), var(--neon-blue));
+        }
+
+        .stat-label {
+            font-size: 1.4rem;
+            color: rgba(224, 247, 255, 0.8);
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.8rem;
+            margin: 80px 0 60px;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .section-title span {
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            margin: 20px auto 15px;
+            border-radius: 2px;
+            box-shadow: 0 0 15px rgba(108, 92, 231, 0.5);
+        }
+
+        .section-title::before {
+            content: '◆';
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--neon-blue);
+            font-size: 1.5rem;
+            text-shadow: 0 0 15px var(--neon-blue);
+            animation: spin 8s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: translateX(-50%) rotate(360deg); }
+        }
+
+        .images-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 35px;
+            margin-bottom: 80px;
+        }
+
+        .image-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            transition: var(--transition);
+            position: relative;
+            cursor: pointer;
+            transform: perspective(1000px) rotateX(0) rotateY(0);
+            transform-style: preserve-3d;
+            z-index: 2;
+        }
+
+        .image-card:hover {
+            transform: translateY(-15px) perspective(1000px) rotateX(5deg) rotateY(5deg);
+            box-shadow: 0 25px 50px rgba(108, 92, 231, 0.5);
+            border-color: var(--neon-purple);
+        }
+
+        .image-title {
+            padding: 22px;
+            font-size: 1.6rem;
+            text-align: center;
+            background: rgba(10, 14, 23, 0.7);
+            border-bottom: 1px solid var(--card-border);
+            color: var(--neon-blue);
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .image-content {
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-content::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(78, 111, 255, 0.1), rgba(185, 103, 255, 0.1));
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .image-card:hover .image-content::after {
+            opacity: 1;
+        }
+
+        .image-content img {
+            max-width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            transition: var(--transition);
+            transform: scale(1);
+        }
+
+        .image-card:hover .image-content img {
+            transform: scale(1.03);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .view-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            color: white;
+            font-size: 3rem;
+            background: rgba(0, 0, 0, 0.7);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            transition: var(--transition);
+            opacity: 0;
+        }
+
+        .image-card:hover .view-icon {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 14, 23, 0.95);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .lightbox.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            transform: scale(0.8);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .lightbox.active .lightbox-content {
+            transform: scale(1);
+        }
+
+        .lightbox-img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 15px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: -40px;
+            right: -10px;
+            color: white;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-shadow: 0 0 10px var(--plasma-pink);
+        }
+
+        .lightbox-close:hover {
+            color: var(--plasma-pink);
+            transform: rotate(90deg);
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 35px;
+            margin: 60px 0;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 35px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px rgba(108, 92, 231, 0.5);
+            border-color: var(--neon-purple);
+        }
+
+        .chart-title {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            color: var(--neon-blue);
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .chart-container {
+            height: 320px;
+            position: relative;
+        }
+
+        .nodes-count {
+            text-align: center;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 50px;
+            margin: 80px auto;
+            max-width: 850px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+            z-index: 2;
+        }
+
+        .nodes-count:hover {
+            transform: scale(1.02);
+            box-shadow: 0 25px 60px rgba(108, 92, 231, 0.6);
+        }
+
+        .nodes-count::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+        }
+
+        .highlight {
+            font-size: 5.5rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple), var(--matrix-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+            margin: 30px 0;
+            text-shadow: 0 0 30px rgba(0, 224, 255, 0.4);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+
+        .nodes-desc {
+            font-size: 1.5rem;
+            max-width: 700px;
+            margin: 0 auto;
+            color: var(--neon-blue);
+            font-weight: 500;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 100px;
+            padding: 50px 0 40px;
+            position: relative;
+        }
+        .copyright {
+            margin-top: 30px;
+            color: rgba(224, 247, 255, 0.7);
+            font-size: 1.1rem;
+        }
+
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .floating-element {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--neon-purple), transparent 70%);
+            opacity: 0.1;
+            filter: blur(30px);
+            animation: float 15s infinite linear;
+        }
+
+        .floating-element:nth-child(1) {
+            width: 400px;
+            height: 400px;
+            top: 10%;
+            left: 5%;
+            animation-duration: 20s;
+        }
+
+        .floating-element:nth-child(2) {
+            width: 300px;
+            height: 300px;
+            bottom: 20%;
+            right: 10%;
+            background: radial-gradient(circle, var(--neon-blue), transparent 70%);
+            animation-duration: 25s;
+            animation-delay: -5s;
+        }
+
+        .floating-element:nth-child(3) {
+            width: 200px;
+            height: 200px;
+            top: 40%;
+            right: 25%;
+            background: radial-gradient(circle, var(--matrix-green), transparent 70%);
+            animation-duration: 18s;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(50px, 50px) rotate(90deg); }
+            50% { transform: translate(100px, -50px) rotate(180deg); }
+            75% { transform: translate(-50px, -100px) rotate(270deg); }
+            100% { transform: translate(0, 0) rotate(360deg); }
+        }
+
+        @media (max-width: 1100px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .domain {
+                font-size: 2rem;
+            }
+            
+            .section-title {
+                font-size: 2.2rem;
+            }
+            
+            .stat-value {
+                font-size: 2.5rem;
+            }
+            
+            .images-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .highlight {
+                font-size: 3.5rem;
+            }
+            
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 粒子背景 -->
+    <div id="particles-js"></div>
+    
+    <!-- 网格线背景 -->
+    <div class="grid-lines"></div>
+    
+    <!-- 浮动元素 -->
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+    
+    <!-- 灯箱 -->
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-content">
+            <img class="lightbox-img" id="lightbox-img" src="" alt="放大图片">
+            <div class="lightbox-close" id="lightbox-close">
+                <i class="fas fa-times"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-network-wired logo-icon"></i>
+                <h1>EdgeOne <span>全球加速网络</span></h1>
+                <p class="subtitle">智能路由分发 · 超低延迟 · 安全防护 · 全球覆盖</p>
+            </div>
+            
+            <div class="domain-card">
+                <div class="domain">eo.wudu.ltd</div>
+                <p class="domain-info">优选智能解析域名，自动分配最佳接入节点</p>
+            </div>
+        </header>
+        
+        <!-- 核心数据统计 -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <i class="fas fa-bolt stat-icon"></i>
+                <div class="stat-value">40ms</div>
+                <div class="stat-label">全国平均 Ping 延迟</div>
+            </div>
+            
+            <div class="stat-card">
+                <i class="fas fa-globe-asia stat-icon"></i>
+                <div class="stat-value">0.3s</div>
+                <div class="stat-label">网站平均测速</div>
+            </div>
+            
+            <div class="stat-card">
+                <i class="fas fa-server stat-icon"></i>
+                <div class="stat-value">1020+</div>
+                <div class="stat-label">全球节点数量</div>
+            </div>
+        </div>
+        
+        <!-- 测速图片展示 -->
+        <h2 class="section-title">节点测速 <span>可视化</span></h2>
+        
+        <div class="images-container">
+            <div class="image-card">
+                <div class="image-title">全国 Ping 延迟测速图</div>
+                <div class="image-content">
+                    <img src="https://e3f49eaa46b57.cdn.sohucs.com/2025/7/7/20/45/MTAwMTIyXzE3NTE4OTIzNDE2NDY=.png" alt="全国Ping延迟测速图" data-src="https://e3f49eaa46b57.cdn.sohucs.com/2025/7/7/20/45/MTAwMTIyXzE3NTE4OTIzNDE2NDY=.png">
+                    <div class="view-icon">
+                        <i class="fas fa-expand"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="image-card">
+                <div class="image-title">HTTP 网站测速图</div>
+                <div class="image-content">
+                    <img src="https://e3f49eaa46b57.cdn.sohucs.com/2025/7/7/20/46/MTAwMTIyXzE3NTE4OTIzOTg0Mzc=.png" alt="HTTP网站测速图" data-src="https://e3f49eaa46b57.cdn.sohucs.com/2025/7/7/20/46/MTAwMTIyXzE3NTE4OTIzOTg0Mzc=.png">
+                    <div class="view-icon">
+                        <i class="fas fa-expand"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="image-card">
+                <div class="image-title">所有 A 记录解析图</div>
+                <div class="image-content">
+                    <img src="https://e3f49eaa46b57.cdn.sohucs.com/2025/7/7/20/46/MTAwMTIyXzE3NTE4OTI0MDcxNTg=.png" alt="所有A记录解析图" data-src="https://e3f49eaa46b57.cdn.sohucs.com/2025/7/7/20/46/MTAwMTIyXzE3NTE4OTI0MDcxNTg=.png">
+                    <div class="view-icon">
+                        <i class="fas fa-expand"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 网络性能图表 -->
+        <h2 class="section-title">网络性能 <span>分析</span></h2>
+        
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3 class="chart-title">网络类型延迟对比 (ms)</h3>
+                <div class="chart-container">
+                    <canvas id="pingChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h3 class="chart-title">网站测速区域分布 (s)</h3>
+                <div class="chart-container">
+                    <canvas id="speedChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 节点数量 -->
+        <div class="nodes-count">
+            <h3>全球节点覆盖</h3>
+            <div class="highlight">1020+</div>
+            <p class="nodes-desc">EdgeOne 网络在全球部署超过1020个智能节点，为您的业务提供高速、稳定的全球加速服务</p>
+        </div>
+        
+        <footer>
+            <p class="copyright">© 2025 EdgeOne 优选节点 | eo.wudu.ltd | 数据更新时间：2025年7月7日</p>
+        </footer>
+    </div>
+    
+    <!-- 粒子效果库 -->
+    <script src="https://jsd.qxzhan.cn/particles.js/2.0.0/particles.min.js"></script>
+    
+    <script>
+        // 高级粒子效果配置
+        particlesJS("particles-js", {
+            particles: {
+                number: { 
+                    value: 120, 
+                    density: { 
+                        enable: true, 
+                        value_area: 1000 
+                    } 
+                },
+                color: { value: "#00e0ff" },
+                shape: { 
+                    type: "circle",
+                    stroke: { 
+                        width: 0, 
+                        color: "#000000" 
+                    },
+                    polygon: { 
+                        nb_sides: 5 
+                    }
+                },
+                opacity: {
+                    value: 0.5,
+                    random: true,
+                    anim: {
+                        enable: true,
+                        speed: 1,
+                        opacity_min: 0.1,
+                        sync: false
+                    }
+                },
+                size: {
+                    value: 3,
+                    random: true,
+                    anim: {
+                        enable: true,
+                        speed: 2,
+                        size_min: 0.1,
+                        sync: false
+                    }
+                },
+                line_linked: {
+                    enable: true,
+                    distance: 150,
+                    color: "#6c5ce7",
+                    opacity: 0.3,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: 2,
+                    direction: "none",
+                    random: true,
+                    straight: false,
+                    out_mode: "out",
+                    bounce: false,
+                    attract: {
+                        enable: true,
+                        rotateX: 600,
+                        rotateY: 1200
+                    }
+                }
+            },
+            interactivity: {
+                detect_on: "canvas",
+                events: {
+                    onhover: { 
+                        enable: true, 
+                        mode: "grab" 
+                    },
+                    onclick: { 
+                        enable: true, 
+                        mode: "push" 
+                    },
+                    resize: true
+                },
+                modes: {
+                    grab: {
+                        distance: 180,
+                        line_linked: {
+                            opacity: 0.8
+                        }
+                    },
+                    push: {
+                        particles_nb: 4
+                    }
+                }
+            },
+            retina_detect: true
+        });
+        
+        // 图片灯箱功能
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxClose = document.getElementById('lightbox-close');
+        const imageCards = document.querySelectorAll('.image-card');
+        
+        imageCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const imgSrc = this.querySelector('img').getAttribute('data-src');
+                lightboxImg.setAttribute('src', imgSrc);
+                lightbox.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        });
+        
+        lightboxClose.addEventListener('click', function() {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        });
+        
+        lightbox.addEventListener('click', function(e) {
+            if (e.target === lightbox) {
+                lightbox.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        });
+        
+        // 图表初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ping延迟图表
+            const pingCtx = document.getElementById('pingChart').getContext('2d');
+            const pingChart = new Chart(pingCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['全国平均', '电信网络', '联通网络', '移动网络'],
+                    datasets: [{
+                        label: '延迟 (ms)',
+                        data: [40, 41, 36, 45],
+                        backgroundColor: [
+                            'rgba(78, 111, 255, 0.8)',
+                            'rgba(0, 224, 255, 0.8)',
+                            'rgba(185, 103, 255, 0.8)',
+                            'rgba(255, 45, 117, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(78, 111, 255, 1)',
+                            'rgba(0, 224, 255, 1)',
+                            'rgba(185, 103, 255, 1)',
+                            'rgba(255, 45, 117, 1)'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(108, 92, 231, 0.1)'
+                            },
+                            ticks: {
+                                color: '#e0f7ff',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#e0f7ff',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(16, 22, 39, 0.9)',
+                            titleColor: '#00e0ff',
+                            bodyColor: '#e0f7ff',
+                            borderColor: '#6c5ce7',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    }
+                }
+            });
+            
+            // 网站测速图表
+            const speedCtx = document.getElementById('speedChart').getContext('2d');
+            const speedChart = new Chart(speedCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['北京', '上海', '广州', '成都', '武汉', '西安', '沈阳'],
+                    datasets: [{
+                        label: '网站打开速度 (s)',
+                        data: [0.25, 0.22, 0.19, 0.31, 0.28, 0.33, 0.35],
+                        backgroundColor: 'rgba(0, 224, 255, 0.2)',
+                        borderColor: 'rgba(0, 224, 255, 1)',
+                        pointBackgroundColor: 'rgba(185, 103, 255, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(185, 103, 255, 1)',
+                        borderWidth: 2,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                color: 'rgba(108, 92, 231, 0.2)'
+                            },
+                            grid: {
+                                color: 'rgba(108, 92, 231, 0.2)'
+                            },
+                            pointLabels: {
+                                color: '#e0f7ff',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                color: '#e0f7ff',
+                                backdropColor: 'transparent'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(16, 22, 39, 0.9)',
+                            titleColor: '#00e0ff',
+                            bodyColor: '#e0f7ff',
+                            borderColor: '#6c5ce7',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    }
+                }
+            });
+        });
+        
+        // 卡片3D效果
+        const cards = document.querySelectorAll('.stat-card, .image-card, .chart-card');
+        cards.forEach(card => {
+            card.addEventListener('mousemove', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateY = (x - centerX) / 25;
+                const rotateX = (centerY - y) / 25;
+                
+                this.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px)`;
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateZ(0)';
+            });
+        });
+    </script>
+</body>
+</html>
