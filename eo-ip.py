@@ -72,7 +72,7 @@ def write_ips_to_file(ips, filename):
     print(f"Saved {len(sorted_ips)} IPs to {filename}")
 
 def main():
-    input_file = "/ip_ranges.txt"   # 输入文件名
+    input_file = "./ip_ranges.txt"   # 输入文件名
     success_file = "success_ips.txt"  # 成功IP输出文件
     failed_file = "failed_ips.txt"    # 失败IP输出文件
     max_retries = 1  # 最大重试次数
